@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>TicTacToe</title>
+        <style>
+            div {
+                box-sizing: border-box;
+            }
+
+            #board {
+                width: 300px;
+                font-size: 0;
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .cell {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 100px;
+                height: 100px;
+                border: 1px solid #000;
+                font-size: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="board"></div>
+        <script>
+            window.onload = () => {
+                const $ = (props) => document.querySelector(props);
+                const $$ = (props) => document.querySelectorAll(props);
+
+                // default data
+                const data = [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ];
+
+                let flag = 1;
+
+                function changeFlag() {
+                    flag = 3 - flag;
+                }
+
+                const renderCell = (container, dataSource) => {
+                    const fragment = document.createDocumentFragment();
+
+                    const renderInnerText = (ele) => (ele === 1 ? 'o' : ele === 2 ? 'x' : '');
+                    const renderWarming = () => alert("Can't repeat move later!");
+
+                    dataSource.flat().forEach((element) => {
+                        let cell = document.createElement('div');
+                        cell.innerText = renderInnerText(element);
+                        cell.setAttribute('class', 'cell');
+                        cell.addEventListener('click', function () {
+                            if (cell.innerHTML) {
+                                renderWarming();
+                                return;
+                            }
+                            cell.innerText = renderInnerText(flag);
+                            // todo checkStatus
+                            changeFlag();
+                        });
+                        fragment.appendChild(cell);
+                    });
+
+                    container.appendChild(fragment);
+                };
+
+                console.log('script init...');
+
+                const boardELement = $('#board');
+                console.log('Successfully get the default board！', boardELement);
+
+                console.time('renderCell');
+                renderCell(boardELement, data);
+                console.timeEnd('renderCell');
+            };
+        </script>
+    </body>
+</html>
