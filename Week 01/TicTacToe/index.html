@@ -111,8 +111,15 @@
                     }
                     return false;
                 };
-
-                const move = (i, j) => {
+                const showWinner = () => {
+                    window.alert(`${renderChess(flag)}, win`);
+                    resetBoard();
+                };
+                const aiMove = () => {};
+                const bestChoice = () => {
+                    const cloneData = clone(data);
+                };
+                const userMove = (i, j) => {
                     if (data[i][j]) {
                         console.warn("Can't repeat play chess!");
                         return;
@@ -120,8 +127,7 @@
                     data[i][j] = flag;
                     renderCell(boardELement, data);
                     if (checkStatus()) {
-                        window.alert(`${renderChess(flag)}, win`);
-                        resetBoard();
+                        showWinner();
                         return;
                     }
                     changeFlag();
@@ -137,7 +143,7 @@
                             let cell = document.createElement('div');
                             cell.innerText = renderChess(element);
                             cell.setAttribute('class', 'cell');
-                            cell.addEventListener('click', () => move(i, j));
+                            cell.addEventListener('click', () => userMove(i, j));
                             fragment.appendChild(cell);
                         }
                     }
