@@ -130,7 +130,7 @@
                     changeFlag();
                 };
 
-                function willWin(cloneData, cloneFlag) {
+                const willWin = (cloneData, cloneFlag) => {
                     for (let i = 0; i < 3; i++) {
                         for (let j = 0; j < 3; j++) {
                             if (cloneData[i][j]) continue;
@@ -142,7 +142,7 @@
                         }
                     }
                     return null;
-                }
+                };
 
                 const bestChoice = (cloneData, cloneFlag) => {
                     let p;
@@ -189,6 +189,7 @@
                 };
                 const renderChess = (ele) => (ele === 1 ? 'o' : ele === 2 ? 'x' : '');
                 const renderCell = (container) => {
+                    console.time('renderCell');
                     container.innerHTML = '';
                     const fragment = document.createDocumentFragment();
 
@@ -204,11 +205,10 @@
                     }
 
                     container.appendChild(fragment);
+                    console.timeEnd('renderCell');
                 };
 
-                console.time('renderCell');
                 renderCell(boardELement, data);
-                console.timeEnd('renderCell');
             };
         </script>
     </body>
