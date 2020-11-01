@@ -58,11 +58,11 @@
                     renderCell(boardELement, data);
                 };
 
-                const checkStatus = () => {
+                const checkStatus = (cloneData, cloneFlag) => {
                     for (let i = 0; i < 3; i++) {
                         let win = true;
                         for (let j = 0; j < 3; j++) {
-                            if (data[i][j] !== flag) {
+                            if (cloneData[i][j] !== cloneFlag) {
                                 win = false;
                                 break;
                             }
@@ -75,7 +75,7 @@
                     for (let i = 0; i < 3; i++) {
                         let win = true;
                         for (let j = 0; j < 3; j++) {
-                            if (data[j][i] !== flag) {
+                            if (cloneData[j][i] !== cloneFlag) {
                                 win = false;
                                 break;
                             }
@@ -88,7 +88,7 @@
                     {
                         let win = true;
                         for (let j = 0; j < 3; j++) {
-                            if (data[j][j] !== flag) {
+                            if (cloneData[j][j] !== cloneFlag) {
                                 win = false;
                                 break;
                             }
@@ -100,7 +100,7 @@
                     {
                         let win = true;
                         for (let j = 0; j < 3; j++) {
-                            if (data[j][3 - j - 1] !== flag) {
+                            if (cloneData[j][3 - j - 1] !== cloneFlag) {
                                 win = false;
                                 break;
                             }
@@ -111,13 +111,67 @@
                     }
                     return false;
                 };
+
                 const showWinner = () => {
                     window.alert(`${renderChess(flag)}, win`);
                     resetBoard();
                 };
-                const aiMove = () => {};
-                const bestChoice = () => {
-                    const cloneData = clone(data);
+
+                const aiMove = () => {
+                    let choice = bestChoice(clone(data), flag);
+                    if (choice.point) {
+                        data[choice.point[1]][choice.point[0]] = flag;
+                    }
+                    renderCell(boardELement, data);
+                    if (checkStatus(clone(data), flag)) {
+                        showWinner();
+                        return;
+                    }
+                    changeFlag();
+                };
+
+                function willWin(cloneData, cloneFlag) {
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (cloneData[i][j]) continue;
+                            let tmp = clone(cloneData);
+                            tmp[i][j] = cloneFlag;
+                            if (checkStatus(tmp, cloneFlag)) {
+                                return [j, i];
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                const bestChoice = (cloneData, cloneFlag) => {
+                    let p;
+                    if ((p = willWin(cloneData, cloneFlag))) {
+                        return {
+                            point: p,
+                            result: 1,
+                        };
+                    }
+                    let result = -2;
+                    let point = null;
+                    outer: for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (cloneData[i][j]) continue;
+                            let tmp = clone(cloneData);
+                            tmp[i][j] = cloneFlag;
+                            let opp = bestChoice(tmp, 3 - cloneFlag);
+
+                            if (-opp.result >= result) {
+                                point = [j, i];
+                                result = -opp.result;
+                            }
+                            if (result == 1) break outer;
+                        }
+                    }
+                    return {
+                        point: point,
+                        result: point ? result : 0,
+                    };
                 };
                 const userMove = (i, j) => {
                     if (data[i][j]) {
@@ -126,11 +180,12 @@
                     }
                     data[i][j] = flag;
                     renderCell(boardELement, data);
-                    if (checkStatus()) {
+                    if (checkStatus(clone(data), flag)) {
                         showWinner();
                         return;
                     }
                     changeFlag();
+                    aiMove();
                 };
                 const renderChess = (ele) => (ele === 1 ? 'o' : ele === 2 ? 'x' : '');
                 const renderCell = (container) => {
