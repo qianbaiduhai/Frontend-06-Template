@@ -32,50 +32,118 @@
         <script>
             window.onload = () => {
                 const $ = (props) => document.querySelector(props);
-                const $$ = (props) => document.querySelectorAll(props);
+                const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
-                // default data
-                const data = [
+                console.log('script init...');
+                const boardELement = $('#board');
+                console.log('Successfully get the default board！', boardELement);
+
+                const initData = [
                     [0, 0, 0],
                     [0, 0, 0],
                     [0, 0, 0],
                 ];
 
+                // 1:o，2:x
                 let flag = 1;
+                let data = clone(initData);
 
-                function changeFlag() {
+                const changeFlag = () => {
                     flag = 3 - flag;
-                }
+                };
 
-                const renderCell = (container, dataSource) => {
+                const resetBoard = () => {
+                    flag = 1;
+                    data = clone(initData);
+                    renderCell(boardELement, data);
+                };
+
+                const checkStatus = () => {
+                    for (let i = 0; i < 3; i++) {
+                        let win = true;
+                        for (let j = 0; j < 3; j++) {
+                            if (data[i][j] !== flag) {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win) {
+                            return true;
+                        }
+                    }
+
+                    for (let i = 0; i < 3; i++) {
+                        let win = true;
+                        for (let j = 0; j < 3; j++) {
+                            if (data[j][i] !== flag) {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win) {
+                            return true;
+                        }
+                    }
+
+                    {
+                        let win = true;
+                        for (let j = 0; j < 3; j++) {
+                            if (data[j][j] !== flag) {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win) {
+                            return true;
+                        }
+                    }
+                    {
+                        let win = true;
+                        for (let j = 0; j < 3; j++) {
+                            if (data[j][3 - j - 1] !== flag) {
+                                win = false;
+                                break;
+                            }
+                        }
+                        if (win) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                const move = (i, j) => {
+                    if (data[i][j]) {
+                        console.warn("Can't repeat play chess!");
+                        return;
+                    }
+                    data[i][j] = flag;
+                    renderCell(boardELement, data);
+                    if (checkStatus()) {
+                        window.alert(`${renderChess(flag)}, win`);
+                        resetBoard();
+                        return;
+                    }
+                    changeFlag();
+                };
+                const renderChess = (ele) => (ele === 1 ? 'o' : ele === 2 ? 'x' : '');
+                const renderCell = (container) => {
+                    container.innerHTML = '';
                     const fragment = document.createDocumentFragment();
 
-                    const renderInnerText = (ele) => (ele === 1 ? 'o' : ele === 2 ? 'x' : '');
-                    const renderWarming = () => alert("Can't repeat move later!");
-
-                    dataSource.flat().forEach((element) => {
-                        let cell = document.createElement('div');
-                        cell.innerText = renderInnerText(element);
-                        cell.setAttribute('class', 'cell');
-                        cell.addEventListener('click', function () {
-                            if (cell.innerHTML) {
-                                renderWarming();
-                                return;
-                            }
-                            cell.innerText = renderInnerText(flag);
-                            // todo checkStatus
-                            changeFlag();
-                        });
-                        fragment.appendChild(cell);
-                    });
+                    for (let i = 0; i < data.length; i++) {
+                        for (let j = 0; j < data[i].length; j++) {
+                            const element = data[i][j];
+                            let cell = document.createElement('div');
+                            cell.innerText = renderChess(element);
+                            cell.setAttribute('class', 'cell');
+                            cell.addEventListener('click', () => move(i, j));
+                            fragment.appendChild(cell);
+                        }
+                    }
 
                     container.appendChild(fragment);
                 };
-
-                console.log('script init...');
-
-                const boardELement = $('#board');
-                console.log('Successfully get the default board！', boardELement);
 
                 console.time('renderCell');
                 renderCell(boardELement, data);
