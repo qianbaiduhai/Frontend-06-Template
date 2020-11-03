@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>地图编辑器</title>
+        <style>
+            :root {
+                --cell-width: 8px;
+                --cell-height: 8px;
+
+                --theme-color: #9c9c9c;
+            }
+            #container {
+                display: flex;
+                flex-wrap: wrap;
+
+                width: calc(var(--cell-width) * 100);
+                height: calc(var(--cell-height) * 100);
+                overflow: hidden;
+                font-size: 0;
+            }
+            .cell {
+                width: var(--cell-width);
+                height: var(--cell-height);
+                background: var(--theme-color);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container"></div>
+        <button id="clear">清除</button>
+    </body>
+    <script>
+        window.onload = () => {
+            const $ = (props) => document.querySelector(props);
+
+            const MAP_DATA = 'MAP_DATA';
+
+            const container = $('#container');
+            const offlineData = localStorage.getItem(MAP_DATA);
+            let mapData = offlineData ? JSON.parse(offlineData) : Array(100 * 100).fill(0);
+
+            let isMouseDown = false;
+            let clear = false;
+            let timeoutRecord = undefined;
+
+            const renderMap = () => {
+                for (let x = 0; x < 100; x++) {
+                    for (let y = 0; y < 100; y++) {
+                        const element = mapData[x * 100 + y];
+                        let cell = document.createElement('div');
+                        cell.setAttribute('class', 'cell');
+
+                        if (element === 1) {
+                            cell.style.setProperty('background', '#fff');
+                        }
+
+                        const setMapDataFn = () => {
+                            timeoutRecord = setTimeout(() => {
+                                localStorage.setItem(MAP_DATA, JSON.stringify(mapData));
+                            }, 300);
+                        };
+
+                        cell.addEventListener('mouseover', () => {
+                            if (isMouseDown) {
+                                mapData[x * 100 + y] = clear ? 0 : 1;
+
+                                cell.style.setProperty(
+                                    'background',
+                                    clear ? 'var(--theme-color)' : '#fff'
+                                );
+                                if (timeoutRecord) {
+                                    clearTimeout(timeoutRecord);
+                                    setMapDataFn();
+                                    return;
+                                }
+                                setMapDataFn();
+                            }
+                        });
+
+                        container.appendChild(cell);
+                    }
+                }
+            };
+            renderMap();
+
+            document.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                clear = e.which === 3;
+            });
+            document.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+
+            const clearButton = $('#clear');
+            clearButton.addEventListener('click', () => {
+                mapData = Array(100 * 100).fill(0);
+                container.innerText = '';
+                localStorage.removeItem(MAP_DATA);
+                renderMap();
+            });
+
+            const path = () => {};
+        };
+    </script>
+</html>
