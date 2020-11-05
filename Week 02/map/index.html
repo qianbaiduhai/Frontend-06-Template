@@ -9,21 +9,42 @@
                 --cell-width: 7px;
                 --cell-height: 7px;
 
-                --theme-color: #9c9c9c;
+                --base-color: #9c9c9c;
+                --start-color: #ffe4c4;
+                --end-color: #ffff00;
+                --path-color: #ff6a6a;
+                --traverse-color: #4876ff;
+                --obstacles-color: #fff;
             }
+
             #container {
                 display: flex;
                 flex-wrap: wrap;
 
-                width: calc(var(--cell-width) * 100);
-                height: calc(var(--cell-height) * 100);
-                overflow: hidden;
                 font-size: 0;
             }
-            .cell {
+            #container div {
                 width: var(--cell-width);
                 height: var(--cell-height);
-                background: var(--theme-color);
+            }
+
+            .cell_base {
+                background: var(--base-color);
+            }
+            .cell_start {
+                background: var(--start-color);
+            }
+            .cell_end {
+                background: var(--end-color);
+            }
+            .cell_path {
+                background: var(--path-color);
+            }
+            .cell_traverse {
+                background: var(--traverse-color);
+            }
+            .cell_obstacles {
+                background: var(--obstacles-color);
             }
         </style>
     </head>
@@ -34,26 +55,29 @@
     <script>
         window.onload = () => {
             const $ = (props) => document.querySelector(props);
-            const sleep = (timeout) => {
+            const sleep = (timeout) =>
                 new Promise((resolve) => {
                     setTimeout(() => {
                         resolve();
                     }, timeout);
                 });
-            };
 
             const MAP_DATA = 'MAP_DATA';
             const MAP_X = 100;
             const MAP_Y = 100;
-            const COLOR_CONFIG = {
-                1: '#fff',
-                2: '#3f51b5',
-                3: '#ff1100',
-                4: '#000',
-                5: '#FFEB3B',
+            const CLASS_MAP = {
+                0: 'cell_base',
+                1: 'cell_obstacles',
+                2: 'cell_start',
+                3: 'cell_end',
+                4: 'cell_path',
+                5: 'cell_traverse',
             };
 
             const container = $('#container');
+
+            container.style.setProperty('width', `calc(var(--cell-width) * ${MAP_X})`);
+            container.style.setProperty('height', `calc(var(--cell-height) * ${MAP_Y})`);
 
             const offlineData = localStorage.getItem(MAP_DATA);
             let mapData = offlineData ? JSON.parse(offlineData) : Array(MAP_X * MAP_Y).fill(0);
@@ -63,17 +87,13 @@
             let timeoutRecord = undefined;
 
             const renderMap = () => {
-                container.innerText = '';
-
-                for (let x = 0; x < MAP_X; x++) {
-                    for (let y = 0; y < MAP_Y; y++) {
-                        const index = x * MAP_X + y;
+                for (let y = 0; y < MAP_Y; y++) {
+                    for (let x = 0; x < MAP_X; x++) {
+                        const index = x + y * MAP_Y;
                         const element = mapData[index];
 
                         let cell = document.createElement('div');
-                        cell.setAttribute('class', 'cell');
-
-                        cell.style.setProperty('background', COLOR_CONFIG[element]);
+                        cell.setAttribute('class', CLASS_MAP[element]);
 
                         const setOfflineMapData = () => {
                             timeoutRecord = setTimeout(() => {
@@ -81,23 +101,22 @@
                             }, 300);
                         };
 
-                        cell.addEventListener('mouseover', () => {
+                        const onMouseOver = () => {
                             if (isMouseDown) {
                                 mapData[index] = clear ? 0 : 1;
 
-                                cell.style.setProperty(
-                                    'background',
-                                    clear ? 'var(--theme-color)' : '#fff'
-                                );
-                                if (timeoutRecord) {
-                                    clearTimeout(timeoutRecord);
-                                    setOfflineMapData();
-                                    return;
+                                if (clear) {
+                                    cell.setAttribute('class', 'cell_base');
+                                } else {
+                                    cell.setAttribute('class', 'cell_obstacles');
                                 }
+
+                                timeoutRecord && clearTimeout(timeoutRecord);
                                 setOfflineMapData();
                             }
-                        });
+                        };
 
+                        cell.addEventListener('mouseover', onMouseOver);
                         container.appendChild(cell);
                     }
                 }
@@ -119,36 +138,62 @@
             clearButton.addEventListener('click', () => {
                 mapData = Array(MAP_X * MAP_Y).fill(0);
                 localStorage.removeItem(MAP_DATA);
-                renderMap();
+                Array.from(container.children).forEach((ele) =>
+                    ele.setAttribute('class', 'cell_base')
+                );
             });
 
-            path = (start, end) => {
+            const updateCell = (position, val) => {
+                mapData[position] = val;
+                container.children[position].setAttribute('class', CLASS_MAP[val]);
+            };
+
+            let path = [];
+            let pathMap = {};
+            findPath = async (start, end) => {
+                updateCell(start[0] + start[1] * MAP_Y, 2);
+
                 const queue = [start];
+                const insert = async (x, y, pre) => {
+                    if (x < 0 || x >= MAP_X || y < 0 || y >= MAP_Y) return;
 
-                console.time('path');
-                const insert = async (x, y) => {
-                    if (x < 0 || x > MAP_X) return;
-                    if (y < 0 || y > MAP_Y) return;
-                    if (mapData[x * MAP_X + y] !== 0) {
-                        return;
-                    }
+                    const index = x + y * MAP_Y;
 
-                    mapData[x * MAP_X + y] = 2;
+                    if (mapData[index]) return;
+
+                    pathMap[index] = pre;
+                    updateCell(index, 5);
                     queue.push([x, y]);
                 };
 
                 while (queue.length) {
                     let [x, y] = queue.shift();
+                    const index = x + y * MAP_Y;
+
                     if (x === end[0] && y === end[1]) {
+                        updateCell(index, 3);
+                        let currentVal = pathMap[index];
+                        let finalVal = start[0] + start[1] * MAP_Y;
+                        while (currentVal !== finalVal) {
+                            path.push(currentVal);
+                            await sleep(30);
+                            updateCell(currentVal, 4);
+                            currentVal = pathMap[currentVal];
+                        }
                         break;
                     }
-                    insert(x + 1, y);
-                    insert(x, y + 1);
-                    insert(x - 1, y);
-                    insert(x, y - 1);
-                }
 
-                console.timeEnd('path');
+                    await insert(x + 1, y, index);
+                    await insert(x, y + 1, index);
+                    await insert(x - 1, y, index);
+                    await insert(x, y - 1, index);
+
+                    await insert(x + 1, y + 1, index);
+                    await insert(x - 1, y + 1, index);
+                    await insert(x - 1, y - 1, index);
+                    await insert(x + 1, y - 1, index);
+                }
+                console.log('end');
             };
         };
     </script>
