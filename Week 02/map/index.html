@@ -137,7 +137,7 @@
                 mapData[position] = val;
                 container.children[position].setAttribute('class', CLASS_MAP[val]);
             };
-
+            // todo 二叉堆
             class Queue {
                 constructor(start, end) {
                     this.start = start;
@@ -148,6 +148,7 @@
                 get length() {
                     return this.data.length;
                 }
+
                 push(val) {
                     this.data.push(val);
                 }
