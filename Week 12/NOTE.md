@@ -17,3 +17,5 @@ CSS 排版，两样：盒和文字正常流
 -   BFC：从上到下，line-box 和 block-level-box 只有 BFC 会产生边距折叠 (margin collpose)
 -   Block Container：所有能够容纳不是特殊 display 的
     block 、inline-block 、table-cell 、flex item 、grid cell 、table-caption
+
+
